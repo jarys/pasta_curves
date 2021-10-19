@@ -6,9 +6,6 @@ use core::fmt;
 use core::iter::Sum;
 use core::ops::{Add, Mul, Neg, Sub};
 
-#[cfg(feature = "std")]
-use std::boxed::Box;
-
 use ff::{Field, PrimeField};
 use group::{
     cofactor::{CofactorCurve, CofactorGroup},
@@ -101,8 +98,8 @@ macro_rules! new_curve_impl {
             }
         }
 
-        // TODO: cannot find trait `WnafGroup` in crate `group` ???
-        /*impl group::WnafGroup for $name {
+        #[cfg(feature = "alloc")]
+        impl group::WnafGroup for $name {
             fn recommended_wnaf_for_num_scalars(num_scalars: usize) -> usize {
                 // Copied from bls12_381::g1, should be updated.
                 const RECOMMENDATIONS: [usize; 12] =
@@ -119,7 +116,7 @@ macro_rules! new_curve_impl {
 
                 ret
             }
-        }*/
+        }
 
         impl CurveExt for $name {
             type ScalarExt = $scalar;
