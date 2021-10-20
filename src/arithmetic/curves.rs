@@ -8,8 +8,8 @@ use super::{FieldExt, Group};
 
 use core::ops::{Add, Mul, Sub};
 
-#[cfg(feature = "std")]
-use std::boxed::Box;
+#[cfg(feature = "alloc")]
+use alloc::boxed::Box;
 //#[cfg(feature = "std")]
 //use std::io::{self, Read, Write};
 
@@ -66,7 +66,7 @@ pub trait CurveExt:
     ///     (g * x + &(h * r)).to_affine()
     /// }
     /// ```
-    #[cfg(features = "std")]
+    #[cfg(feature = "alloc")]
     fn hash_to_curve<'a>(domain_prefix: &'a str) -> Box<dyn Fn(&[u8]) -> Self + 'a>;
 
     /// Unboxed version of hash_to_curve.

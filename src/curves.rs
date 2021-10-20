@@ -6,6 +6,9 @@ use core::fmt;
 use core::iter::Sum;
 use core::ops::{Add, Mul, Neg, Sub};
 
+#[cfg(feature = "alloc")]
+use alloc::boxed::Box;
+
 use ff::{Field, PrimeField};
 use group::{
     cofactor::{CofactorCurve, CofactorGroup},
@@ -872,9 +875,6 @@ macro_rules! impl_projective_curve_specific {
     };
 }
 
-#[cfg(features = "alloc")]
-use core::alloc::boxed::Box;
-
 macro_rules! impl_projective_curve_ext {
     ($name:ident, $iso:ident, $base:ident, special_a0_b5) => {
         fn unboxed_hash_to_curve(domain_prefix: &str, message: &[u8]) -> Self {
@@ -897,7 +897,7 @@ macro_rules! impl_projective_curve_ext {
             hashtocurve::iso_map::<$base, $name, $iso>(&r, &$name::ISOGENY_CONSTANTS)
         }
 
-        #[cfg(features = "alloc")]
+        #[cfg(feature = "alloc")]
         fn hash_to_curve<'a>(domain_prefix: &'a str) -> Box<dyn Fn(&[u8]) -> Self + 'a> {
             Box::new(move |message| Self::unboxed_hash_to_curve(domain_prefix, message))
         }
@@ -914,7 +914,7 @@ macro_rules! impl_projective_curve_ext {
     };
     ($name:ident, $iso:ident, $base:ident, general) => {
         /// Unimplemented: hashing to this curve is not supported
-        #[cfg(features = "alloc")]
+        #[cfg(feature = "alloc")]
         fn hash_to_curve<'a>(_domain_prefix: &'a str) -> Box<dyn Fn(&[u8]) -> Self + 'a> {
             unimplemented!()
         }

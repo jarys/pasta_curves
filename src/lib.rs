@@ -13,6 +13,9 @@
 #[macro_use]
 extern crate std;
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 #[macro_use]
 mod macros;
 mod curves;
