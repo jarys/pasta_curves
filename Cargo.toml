@@ -42,7 +42,7 @@ required-features = ["std"]
 
 [dependencies]
 blake2b_simd = { version = "0.5", default-features = false }
-ff = { version = "0.11", default-features = false }
+ff = { version = "0.11", default-features = false, features = ["bits"] }
 group = { version = "0.11", default-features = false }
 rand = { version = "0.8", default-features = false }
 static_assertions = "1.1.0"
