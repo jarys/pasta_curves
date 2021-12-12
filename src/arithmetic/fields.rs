@@ -58,17 +58,19 @@ pub trait SqrtRatio: ff::PrimeField {
         let x = (*num) * div_inv; // x = num/div
         let y = x * Self::root_of_unity(); // y = lambda*num/div
 
-        // Either x is square or y is square
         let x_sqrt = x.sqrt();
         let y_sqrt = y.sqrt();
-        let x_is_sqrt = x_sqrt.is_some();
-        let sqrt = CtOption::conditional_select(&y_sqrt, &x_sqrt, x_is_sqrt);
 
-        if (num.is_zero() | div.is_zero()).into() {
-            (!div.is_zero(), Self::zero()) // special cases
-        } else {
-            (x_is_sqrt, sqrt.unwrap())
-        }
+        // Either x is square or y is square
+        let normal_sqrt = CtOption::conditional_select(&y_sqrt, &x_sqrt, x_sqrt.is_some());
+        let special_sqrt = CtOption::new(Self::zero(), 1.into());
+        let result_sqrt = CtOption::conditional_select(&normal_sqrt, &special_sqrt, div.is_zero());
+
+        let normal_bool = x_sqrt.is_some();
+        let special_bool = !div.is_zero();
+        let result_bool = Choice::conditional_select(&normal_bool, &special_bool, div.is_zero());
+
+        (result_bool, result_sqrt.unwrap())
     }
 
     /// Equivalent to `Self::sqrt_ratio(self, one())`.
