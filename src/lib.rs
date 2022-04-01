@@ -2,6 +2,8 @@
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(feature = "unboxed_closures", feature(unboxed_closures))]
+#![cfg_attr(feature = "unboxed_closures", feature(fn_traits))]
 #![allow(unknown_lints)]
 #![allow(clippy::op_ref, clippy::same_item_push, clippy::upper_case_acronyms)]
 #![deny(rustdoc::broken_intra_doc_links)]
@@ -9,7 +11,7 @@
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
 
-#[cfg(feature = "alloc")]
+#[cfg(any(not(feature = "unboxed_closures"), feature = "sqrt-table"))]
 extern crate alloc;
 
 #[cfg(test)]
@@ -25,7 +27,8 @@ pub mod arithmetic;
 pub mod pallas;
 pub mod vesta;
 
-#[cfg(feature = "alloc")]
+#[cfg(feature = "unboxed_closures")]
+mod hash_to_curve2;
 mod hashtocurve;
 
 pub use curves::*;
@@ -33,7 +36,6 @@ pub use fields::*;
 
 pub extern crate group;
 
-#[cfg(feature = "alloc")]
 #[test]
 fn test_endo_consistency() {
     use crate::arithmetic::{CurveExt, FieldExt};

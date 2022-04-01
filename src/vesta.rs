@@ -14,7 +14,6 @@ pub type Point = Eq;
 /// A Vesta point in the affine coordinate space (or the point at infinity).
 pub type Affine = EqAffine;
 
-#[cfg(feature = "alloc")]
 #[test]
 fn test_map_to_curve_simple_swu() {
     use crate::arithmetic::CurveExt;
@@ -49,7 +48,6 @@ fn test_map_to_curve_simple_swu() {
     );
 }
 
-#[cfg(feature = "alloc")]
 #[test]
 fn test_hash_to_curve() {
     use crate::arithmetic::CurveExt;

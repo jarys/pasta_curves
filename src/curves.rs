@@ -6,7 +6,7 @@ use core::fmt;
 use core::iter::Sum;
 use core::ops::{Add, Mul, Neg, Sub};
 
-#[cfg(feature = "alloc")]
+#[cfg(not(feature = "unboxed_closures"))]
 use alloc::boxed::Box;
 
 use ff::{Field, PrimeField};
@@ -21,8 +21,10 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 use super::{Fp, Fq};
 use crate::arithmetic::Group;
 
-#[cfg(feature = "alloc")]
 use crate::arithmetic::{Coordinates, CurveAffine, CurveExt, FieldExt};
+
+#[cfg(feature = "unboxed_closures")]
+use crate::hash_to_curve2::Hasher;
 
 macro_rules! new_curve_impl {
     (($($privacy:tt)*), $name:ident, $name_affine:ident, $iso:ident, $base:ident, $scalar:ident,
@@ -102,9 +104,7 @@ macro_rules! new_curve_impl {
                 self.z.is_zero()
             }
         }
-
-        #[cfg(feature = "alloc")]
-        #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+        #[cfg(feature = "group/alloc")]
         impl group::WnafGroup for $name {
             fn recommended_wnaf_for_num_scalars(num_scalars: usize) -> usize {
                 // Copied from bls12_381::g1, should be updated.
@@ -124,12 +124,11 @@ macro_rules! new_curve_impl {
             }
         }
 
-        #[cfg(feature = "alloc")]
-        #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
         impl CurveExt for $name {
             type ScalarExt = $scalar;
             type Base = $base;
             type AffineExt = $name_affine;
+            type IsoCurve = $iso;
 
             const CURVE_ID: &'static str = $curve_id;
 
@@ -702,8 +701,6 @@ macro_rules! new_curve_impl {
             }
         }
 
-        #[cfg(feature = "alloc")]
-        #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
         impl CurveAffine for $name_affine {
             type ScalarExt = $scalar;
             type Base = $base;
@@ -883,9 +880,9 @@ macro_rules! impl_projective_curve_specific {
     };
 }
 
-#[cfg(feature = "alloc")]
 macro_rules! impl_projective_curve_ext {
     ($name:ident, $iso:ident, $base:ident, special_a0_b5) => {
+        #[cfg(not(feature = "unboxed_closures"))]
         fn hash_to_curve<'a>(domain_prefix: &'a str) -> Box<dyn Fn(&[u8]) -> Self + 'a> {
             use super::hashtocurve;
 
@@ -908,6 +905,10 @@ macro_rules! impl_projective_curve_ext {
             })
         }
 
+        #[cfg(feature = "unboxed_closures")]
+        fn hash_to_curve<'a>(domain_prefix: &'a str) -> Hasher<'a, $base, $name, $iso> {
+            Hasher::new(domain_prefix)
+        }
         /// Apply the curve endomorphism by multiplying the x-coordinate
         /// by an element of multiplicative order 3.
         fn endo(&self) -> Self {
@@ -920,7 +921,12 @@ macro_rules! impl_projective_curve_ext {
     };
     ($name:ident, $iso:ident, $base:ident, general) => {
         /// Unimplemented: hashing to this curve is not supported
+        #[cfg(not(feature = "unboxed_closures"))]
         fn hash_to_curve<'a>(_domain_prefix: &'a str) -> Box<dyn Fn(&[u8]) -> Self + 'a> {
+            unimplemented!()
+        }
+        #[cfg(feature = "unboxed_closures")]
+        fn hash_to_curve<'a>(_domain_prefix: &'a str) -> Hasher<'a, $base, $name, $iso> {
             unimplemented!()
         }
 
@@ -978,7 +984,7 @@ new_curve_impl!(
     special_a0_b5
 );
 new_curve_impl!(
-    (pub(crate)),
+    (pub),
     IsoEp,
     IsoEpAffine,
     Ep,
@@ -995,7 +1001,7 @@ new_curve_impl!(
     general
 );
 new_curve_impl!(
-    (pub(crate)),
+    (pub),
     IsoEq,
     IsoEqAffine,
     Eq,
@@ -1012,9 +1018,15 @@ new_curve_impl!(
     general
 );
 
-impl Ep {
+pub(crate) trait CurveConstants: CurveExt {
+    const ISOGENY_CONSTANTS: [Self::Base; 13];
+    const Z: Self::Base;
+    const THETA: Self::Base;
+}
+
+impl CurveConstants for Ep {
     /// Constants used for computing the isogeny from IsoEp to Ep.
-    pub const ISOGENY_CONSTANTS: [Fp; 13] = [
+    const ISOGENY_CONSTANTS: [Fp; 13] = [
         Fp::from_raw([
             0x775f6034aaaaaaab,
             0x4081775473d8375b,
@@ -1096,7 +1108,7 @@ impl Ep {
     ];
 
     /// Z = -13
-    pub const Z: Fp = Fp::from_raw([
+    const Z: Fp = Fp::from_raw([
         0x992d30ecfffffff4,
         0x224698fc094cf91b,
         0x0000000000000000,
@@ -1104,7 +1116,7 @@ impl Ep {
     ]);
 
     /// `(F::root_of_unity().invert().unwrap() * z).sqrt().unwrap()`
-    pub const THETA: Fp = Fp::from_raw([
+    const THETA: Fp = Fp::from_raw([
         0xca330bcc09ac318e,
         0x51f64fc4dc888857,
         0x4647aef782d5cdc8,
@@ -1112,9 +1124,9 @@ impl Ep {
     ]);
 }
 
-impl Eq {
+impl CurveConstants for Eq {
     /// Constants used for computing the isogeny from IsoEq to Eq.
-    pub const ISOGENY_CONSTANTS: [Fq; 13] = [
+    const ISOGENY_CONSTANTS: [Fq; 13] = [
         Fq::from_raw([
             0x43cd42c800000001,
             0x0205dd51cfa0961a,
@@ -1196,7 +1208,7 @@ impl Eq {
     ];
 
     /// Z = -13
-    pub const Z: Fq = Fq::from_raw([
+    const Z: Fq = Fq::from_raw([
         0x8c46eb20fffffff4,
         0x224698fc0994a8dd,
         0x0000000000000000,
@@ -1204,7 +1216,7 @@ impl Eq {
     ]);
 
     /// `(F::root_of_unity().invert().unwrap() * z).sqrt().unwrap()`
-    pub const THETA: Fq = Fq::from_raw([
+    const THETA: Fq = Fq::from_raw([
         0x632cae9872df1b5d,
         0x38578ccadf03ac27,
         0x53c3808d9e2f2357,

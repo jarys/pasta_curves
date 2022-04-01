@@ -1,6 +1,7 @@
 //! This module implements "simplified SWU" hashing to short Weierstrass curves
 //! with a = 0.
 
+use blake2b_simd;
 use static_assertions::const_assert;
 use subtle::ConstantTimeEq;
 
