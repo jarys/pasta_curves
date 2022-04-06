@@ -1018,9 +1018,13 @@ new_curve_impl!(
     general
 );
 
-pub(crate) trait CurveConstants: CurveExt {
+/// Curve constants
+pub trait CurveConstants: CurveExt {
+    /// Constants used for computing the isogeny from IsoEp to Ep.
     const ISOGENY_CONSTANTS: [Self::Base; 13];
+    /// Z = -13
     const Z: Self::Base;
+    /// `(F::root_of_unity().invert().unwrap() * z).sqrt().unwrap()`
     const THETA: Self::Base;
 }
 
