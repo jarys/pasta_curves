@@ -63,8 +63,5 @@ alloc = ["group/alloc"]
 bits = ["ff/bits"]
 gpu = ["alloc", "ec-gpu"]
 sqrt-table = ["alloc", "lazy_static"]
-<<<<<<< HEAD
 repr-c = []
-=======
 unboxed_closures = []
->>>>>>> d4d9ad6 (Add unboxed_closures feature)
