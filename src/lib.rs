@@ -25,7 +25,7 @@ pub mod arithmetic;
 pub mod pallas;
 pub mod vesta;
 
-#[cfg(feature = "alloc")]
+//#[cfg(feature = "alloc")]
 mod hashtocurve;
 
 pub use curves::*;
