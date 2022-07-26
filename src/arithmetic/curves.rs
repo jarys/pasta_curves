@@ -1,26 +1,16 @@
 //! This module contains the `Curve`/`CurveAffine` abstractions that allow us to
 //! write code that generalizes over a pair of groups.
 
-#[cfg(feature = "alloc")]
 use group::prime::{PrimeCurve, PrimeCurveAffine};
-#[cfg(feature = "alloc")]
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
-#[cfg(feature = "alloc")]
 use super::{FieldExt, Group};
 
-#[cfg(feature = "alloc")]
-use alloc::boxed::Box;
-#[cfg(feature = "alloc")]
 use core::ops::{Add, Mul, Sub};
 
 /// This trait is a common interface for dealing with elements of an elliptic
 /// curve group in a "projective" form, where that arithmetic is usually more
 /// efficient.
-///
-/// Requires the `alloc` feature flag because of `hash_to_curve`.
-#[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub trait CurveExt:
     PrimeCurve<Affine = <Self as CurveExt>::AffineExt>
     + group::Group<Scalar = <Self as CurveExt>::ScalarExt>
@@ -56,6 +46,7 @@ pub trait CurveExt:
     ///
     /// # Example
     ///
+    /// TODO: invalid example
     /// ```
     /// use pasta_curves::arithmetic::CurveExt;
     /// fn pedersen_commitment<C: CurveExt>(
@@ -68,7 +59,7 @@ pub trait CurveExt:
     ///     (g * x + &(h * r)).to_affine()
     /// }
     /// ```
-    fn hash_to_curve<'a>(domain_prefix: &'a str) -> Box<dyn Fn(&[u8]) -> Self + 'a>;
+    fn hash_to_curve<'a>(domain_prefix: &str, message: &[u8]) -> Self;
 
     /// Returns whether or not this element is on the curve; should
     /// always be true unless an "unchecked" API was used.
@@ -87,10 +78,6 @@ pub trait CurveExt:
 
 /// This trait is the affine counterpart to `Curve` and is used for
 /// serialization, storage in memory, and inspection of $x$ and $y$ coordinates.
-///
-/// Requires the `alloc` feature flag because of `hash_to_curve` on [`CurveExt`].
-#[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub trait CurveAffine:
     PrimeCurveAffine<
         Scalar = <Self as CurveAffine>::ScalarExt,
@@ -130,15 +117,12 @@ pub trait CurveAffine:
 }
 
 /// The affine coordinates of a point on an elliptic curve.
-#[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Coordinates<C: CurveAffine> {
     pub(crate) x: C::Base,
     pub(crate) y: C::Base,
 }
 
-#[cfg(feature = "alloc")]
 impl<C: CurveAffine> Coordinates<C> {
     /// Obtains a `Coordinates` value given $(x, y)$, failing if it is not on the curve.
     pub fn from_xy(x: C::Base, y: C::Base) -> CtOption<Self> {
@@ -174,7 +158,6 @@ impl<C: CurveAffine> Coordinates<C> {
     }
 }
 
-#[cfg(feature = "alloc")]
 impl<C: CurveAffine> ConditionallySelectable for Coordinates<C> {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
         Coordinates {
